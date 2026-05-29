@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using Zenject;
 
 public class RainSimulator : MonoBehaviour
@@ -15,6 +17,9 @@ public class RainSimulator : MonoBehaviour
     private ParticleSystem.VelocityOverLifetimeModule _velocity;
     private ParticleSystem.MainModule _main;
 
+    private Volume _rainVolume;
+    private ColorAdjustments _colorAdjustments;
+
     /// smoothing //
     private float _currentIntensity;
 
@@ -27,8 +32,27 @@ public class RainSimulator : MonoBehaviour
         renderer.lengthScale = 25f;
         renderer.velocityScale = 0f;
 
-        renderer.material = new Material(Shader.Find("Particles/Standard Unlit"));
-        renderer.material.color = new Color(0.7f, 0.7f, 0.8f, 0.05f);
+        Shader urpParticlesShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (urpParticlesShader == null)
+        {
+            urpParticlesShader = Shader.Find("Hidden/Universal Render Pipeline/FallbackError");
+            Debug.LogError($"<b>[RainSimulator]</b> URP Particles Shader not found! Using fallback.");
+        }
+
+        renderer.material = new Material(urpParticlesShader);
+        if (renderer.material.HasProperty("_BaseColor")) renderer.material.SetColor("_BaseColor", new Color(0.7f, 0.7f, 0.8f, 0.05f));
+        else renderer.material.color = new Color(0.7f, 0.7f, 0.8f, 0.05f);
+
+        /// add eff volume to gradient lighting //
+        _rainVolume = gameObject.AddComponent<Volume>();
+        _rainVolume.isGlobal = true;
+        _rainVolume.priority = 100;
+
+        var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+        _colorAdjustments = profile.Add<ColorAdjustments>(true);
+        _colorAdjustments.active = true;
+        _colorAdjustments.postExposure.overrideState = true;
+        _rainVolume.profile = profile;
 
         _main = _ps.main;
         _emission = _ps.emission;
@@ -82,8 +106,20 @@ public class RainSimulator : MonoBehaviour
     {
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
-        RenderSettings.fogDensity = Mathf.Lerp(0.005f, 0.045f, intensity);
-        float currentLightStyle = Mathf.Lerp(1.0f, 0.1f, intensity);
-        RenderSettings.ambientLight = new Color(currentLightStyle, currentLightStyle, currentLightStyle, 1f);
+        RenderSettings.fogDensity = Mathf.Lerp(0.005f, 0.04f, intensity);
+
+        if (_colorAdjustments != null)
+        {
+            float targetExposure = Mathf.Lerp(0f, -0.8f, intensity);
+            _colorAdjustments.postExposure.value = targetExposure;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_rainVolume != null && _rainVolume.profile != null)
+        {
+            Destroy(_rainVolume.profile);
+        }
     }
 }
