@@ -3084,6 +3084,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _maxEmissionRate: 5000
   _maxVerticalSpeed: 25
+  _rainMaterialPrefab: {fileID: 2100000, guid: ccba9965f0797874aa2d3736740fef89, type: 2}
 --- !u!1 &1822340515
 GameObject:
   m_ObjectHideFlags: 0

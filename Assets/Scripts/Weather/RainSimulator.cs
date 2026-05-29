@@ -12,6 +12,9 @@ public class RainSimulator : MonoBehaviour
     [SerializeField] private int _maxEmissionRate = 5000;
     [SerializeField] private float _maxVerticalSpeed = 25f;
 
+    [Header("URP Resources")]
+    [SerializeField] private Material _rainMaterialPrefab;
+
     private ParticleSystem _ps;
     private ParticleSystem.EmissionModule _emission;
     private ParticleSystem.VelocityOverLifetimeModule _velocity;
@@ -32,16 +35,17 @@ public class RainSimulator : MonoBehaviour
         renderer.lengthScale = 25f;
         renderer.velocityScale = 0f;
 
-        Shader urpParticlesShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
-        if (urpParticlesShader == null)
+        if (_rainMaterialPrefab != null)
         {
-            urpParticlesShader = Shader.Find("Hidden/Universal Render Pipeline/FallbackError");
-            Debug.LogError($"<b>[RainSimulator]</b> URP Particles Shader not found! Using fallback.");
+            renderer.material = new Material(_rainMaterialPrefab);
+            renderer.material.SetColor("_BaseColor", new Color(0.7f, 0.7f, 0.8f, 0.05f));
         }
-
-        renderer.material = new Material(urpParticlesShader);
-        if (renderer.material.HasProperty("_BaseColor")) renderer.material.SetColor("_BaseColor", new Color(0.7f, 0.7f, 0.8f, 0.05f));
-        else renderer.material.color = new Color(0.7f, 0.7f, 0.8f, 0.05f);
+        else
+        {
+            Debug.LogError($"<b>[RainSimulator]</b> _rainMaterialPrefab не назначен в инспекторе! Будет розовая хрень.");
+            renderer.material = new Material(Shader.Find("Hidden/Universal Render Pipeline/FallbackError"));
+            renderer.material.color = new Color(0.7f, 0.7f, 0.8f, 0.05f);
+        }
 
         /// add eff volume to gradient lighting //
         _rainVolume = gameObject.AddComponent<Volume>();
