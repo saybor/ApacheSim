@@ -42,7 +42,7 @@ public class RainSimulator : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"<b>[RainSimulator]</b> _rainMaterialPrefab не назначен в инспекторе! Будет розовая хрень.");
+            Debug.LogError($"<b>[RainSimulator]</b>: _rainMaterialPrefab is missing");
             renderer.material = new Material(Shader.Find("Hidden/Universal Render Pipeline/FallbackError"));
             renderer.material.color = new Color(0.7f, 0.7f, 0.8f, 0.05f);
         }
